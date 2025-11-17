@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { getMe } from './services/authService';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -15,11 +15,14 @@ function App() {
         const token = localStorage.getItem('token');
         if (token) {
           const userData = await getMe();
-          setUser(userData);
+          setUser(userData.user || userData); // Handle both response formats
         }
       } catch (err) {
-        console.error(err);
-        localStorage.removeItem('token'); // Clear invalid token
+        console.error('Failed to fetch user:', err);
+        // Clear invalid token
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -32,6 +35,10 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+  };
+
+  const handleLogin = (userData) => {
+    setUser(userData.user || userData); // Handle both response formats
   };
 
   if (loading) {
@@ -51,11 +58,11 @@ function App() {
         />
         <Route
           path="/register"
-          element={!user ? <Register /> : <Navigate to="/" />}
+          element={!user ? <Register setUser={setUser} /> : <Navigate to="/" />}
         />
         <Route
           path="/login"
-          element={!user ? <Login setUser={setUser} /> : <Navigate to="/" />}
+          element={!user ? <Login setUser={handleLogin} /> : <Navigate to="/" />}
         />
       </Routes>
     </Router>

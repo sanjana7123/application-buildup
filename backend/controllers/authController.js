@@ -26,7 +26,15 @@ exports.register = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE },
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        res.json({
+          token,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email
+          }
+        });
+
       }
     );
   } catch (err) {
@@ -74,7 +82,15 @@ exports.login = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE },
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        res.json({
+          token,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email
+          }
+        });
+
       }
     );
   } catch (err) {

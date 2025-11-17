@@ -17,7 +17,7 @@ export default function Register({ setUser }) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value.trim() // Basic sanitization
+      [name]: value.trim()
     }));
   };
 
@@ -28,46 +28,70 @@ export default function Register({ setUser }) {
 
     // Client-side validation
     if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
-        setLoading(false);
-        return;
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
     }
 
     if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters');
-        setLoading(false);
-        return;
+      setError('Password must be at least 6 characters');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.username.length < 2) {
+      setError('Username must be at least 2 characters');
+      setLoading(false);
+      return;
     }
 
     try {
-        const res = await axios.post(
+      const res = await axios.post(
         'http://localhost:5000/api/auth/register', 
         {
-            username: formData.username,  // ✅ Changed from 'name' to 'username'
-            email: formData.email.toLowerCase(),
-            password: formData.password
+          username: formData.username,
+          email: formData.email.toLowerCase(),
+          password: formData.password
         },
         {
-            headers: {
+          headers: {
             'Content-Type': 'application/json'
-            }
+          }
         }
-        );
+      );
 
-        localStorage.setItem('user', JSON.stringify(res.data.user));
+      console.log('Registration response:', res.data); // Debug log
+
+      // ✅ FIX: Only proceed if we have a successful response
+      if (res.data && res.data.token) {
+        // Store token and user data
         localStorage.setItem('token', res.data.token);
-        setUser(res.data.user);
+        localStorage.setItem('user', JSON.stringify(res.data.user || res.data));
+        
+        // Update app state
+        setUser(res.data.user || res.data);
         navigate('/');
+      } else {
+        throw new Error('Registration failed - no token received');
+      }
     } catch (err) {
-        setError(
+      console.error('Registration error:', err.response?.data); // Debug log
+      
+      // ✅ FIX: Clear any existing user data on error
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      
+      setError(
         err.response?.data?.msg || 
         err.response?.data?.error || 
+        err.response?.data?.message ||
         'Registration failed. Please try again.'
-        );
+      );
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-    };
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
